@@ -1,0 +1,9 @@
+{
+  "buildCommand": "npm run build:vercel",
+  "crons": [
+    {
+      "path": "/api/cron/cleanup-trash",
+      "schedule": "0 * * * *"
+    }
+  ]
+}

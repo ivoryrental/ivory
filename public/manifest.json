@@ -1,0 +1,15 @@
+{
+    "name": "IVORY Inventory Rental",
+    "short_name": "IVORY",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#FDF9F5",
+    "theme_color": "#D4A58E",
+    "icons": [
+        {
+            "src": "/icon.svg",
+            "sizes": "any",
+            "type": "image/svg+xml"
+        }
+    ]
+}

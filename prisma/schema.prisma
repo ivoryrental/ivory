@@ -1,0 +1,95 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Booking {
+  id           String   @id @default(cuid())
+  customerName String
+  email        String
+  phone        String?
+  message      String?
+  items        String
+  totalAmount  Float    @default(0)
+  status       String   @default("pending")
+  seenByAdmin  Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Category {
+  id          String    @id @default(cuid())
+  name        String
+  name_ka     String?
+  name_ru     String?
+  slug        String    @unique
+  image       String?
+  sortOrder   Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime? // Soft delete - null if active, date if deleted
+  products    Product[]
+  
+  @@index([deletedAt])
+}
+
+model GlobalSettings {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+}
+
+model Lead {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   // Added for contact form compatibility
+  phone     String
+  date      String?
+  message   String?
+  status    String   @default("NEW")
+  createdAt DateTime @default(now())
+}
+
+model Product {
+  id             String    @id @default(cuid())
+  name           String
+  name_ka        String?
+  name_ru        String?
+  description    String
+  description_ka String?
+  description_ru String?
+  price          Float
+  images         String
+  isFeatured     Boolean   @default(false)
+  sortOrder      Int       @default(0)
+  videoUrl       String?
+  categoryId     String
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  deletedAt      DateTime? // Soft delete - null if active, date if deleted
+  category       Category  @relation(fields: [categoryId], references: [id])
+  
+  @@index([deletedAt])
+}
+
+model Service {
+  id             String    @id @default(cuid())
+  title          String
+  title_ka       String?
+  title_ru       String?
+  description    String
+  description_ka String?
+  description_ru String?
+  images         String    @default("[]")
+  sortOrder      Int       @default(0)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  deletedAt      DateTime? // Soft delete - null if active, date if deleted
+  videoUrl       String?
+  
+  @@index([deletedAt])
+}

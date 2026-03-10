@@ -1,0 +1,155 @@
+@import "tailwindcss";
+
+@theme {
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+
+  /* Legacy Compat */
+  --color-text-main: var(--foreground);
+  --color-neutral-light: var(--muted);
+
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Playfair Display", Georgia, serif;
+}
+
+@layer base {
+  :root {
+    /* Warm/Premium Light Mode */
+    --background: #FDFBF7;
+    /* Warm Paper */
+    --foreground: #2A2826;
+    /* Soft Black */
+
+    --card: #FFFFFF;
+    --card-foreground: #2A2826;
+
+    --popover: #FFFFFF;
+    --popover-foreground: #2A2826;
+
+    --primary: #8B4513;
+    /* SaddleBrown */
+    --primary-foreground: #FFFFFF;
+
+    --secondary: #F5F2EB;
+    /* Light Beige */
+    --secondary-foreground: #2A2826;
+
+    --muted: #E5E0D8;
+    --muted-foreground: #78716c;
+
+    --accent: #D4A58E;
+    /* Dusty Peach */
+    --accent-foreground: #1c1917;
+
+    --destructive: #ef4444;
+    --destructive-foreground: #FFFFFF;
+
+    --border: #E5E0D8;
+    --input: #E5E0D8;
+    --ring: #8B4513;
+
+    --radius: 0.5rem;
+
+    /* Paper Texture */
+    --paper-texture: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E");
+  }
+
+  .dark {
+    /* Rich/Deep Dark Mode */
+    --background: #121110;
+    /* Very Dark Warm Grey */
+    --foreground: #FDFBF7;
+
+    --card: #1A1918;
+    --card-foreground: #FDFBF7;
+
+    --popover: #1A1918;
+    --popover-foreground: #FDFBF7;
+
+    --primary: #D4A58E;
+    /* Peach in Dark Mode for contrast */
+    --primary-foreground: #1A1918;
+
+    --secondary: #2A2826;
+    --secondary-foreground: #FDFBF7;
+
+    --muted: #2A2826;
+    --muted-foreground: #a8a29e;
+
+    --accent: #8B4513;
+    /* Brown becomes accent */
+    --accent-foreground: #FFFFFF;
+
+    --destructive: #7f1d1d;
+    --destructive-foreground: #FFFFFF;
+
+    --border: #2A2826;
+    --input: #2A2826;
+    --ring: #D4A58E;
+
+    --paper-texture: none;
+  }
+
+  html,
+  body {
+    max-width: 100vw;
+    overflow-x: hidden;
+  }
+
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans);
+    position: relative;
+    min-height: 100vh;
+    width: 100%;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+
+  body::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: var(--paper-texture);
+    pointer-events: none;
+    z-index: -1;
+    opacity: 0.6;
+  }
+
+  /* Prevent iOS zoom on inputs */
+  @media screen and (max-width: 768px) {
+
+    input,
+    select,
+    textarea {
+      font-size: 16px !important;
+    }
+  }
+}
