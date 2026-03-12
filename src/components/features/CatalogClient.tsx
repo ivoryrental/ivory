@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 import { Search, SlidersHorizontal, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
+import { createPortal } from "react-dom";
 
 interface Category {
     id: string;
@@ -56,6 +57,17 @@ export const CatalogClient = ({
     const [searchQuery, setSearchQuery] = useState(searchParams.get("search") || "");
     const [debouncedQuery, setDebouncedQuery] = useState(searchQuery);
     const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
+    const canUsePortal = typeof document !== "undefined";
+
+    useEffect(() => {
+        if (!canUsePortal) return;
+
+        document.body.style.overflow = isMobileFiltersOpen ? "hidden" : "";
+
+        return () => {
+            document.body.style.overflow = "";
+        };
+    }, [canUsePortal, isMobileFiltersOpen]);
 
     // Sync debounce
     useEffect(() => {
@@ -124,6 +136,47 @@ export const CatalogClient = ({
     // Use initialProducts directly as they are now the paginated slice
     const displayedProducts = initialProducts;
 
+    const filtersContent = (
+        <div className="space-y-6">
+            <div>
+                <h3 className="font-semibold text-text-main mb-4">{t('categories')}</h3>
+                <ul className="space-y-2">
+                    <li>
+                        <button
+                            onClick={() => { updateCategory("all"); setIsMobileFiltersOpen(false); }}
+                            className={cn(
+                                "w-full text-left px-3 py-2 rounded-lg text-sm transition-colors",
+                                selectedCategory === "all"
+                                    ? "bg-primary/10 text-primary font-medium"
+                                    : "text-gray-600 hover:bg-neutral-50"
+                            )}
+                        >
+                            {t('all')}
+                        </button>
+                    </li>
+                    {categories.map((cat) => {
+                        const catName = cat[`name_${locale}` as keyof Category] as string | undefined || cat.name;
+                        return (
+                            <li key={cat.id}>
+                                <button
+                                    onClick={() => { updateCategory(cat.slug); setIsMobileFiltersOpen(false); }}
+                                    className={cn(
+                                        "w-full text-left px-3 py-2 rounded-lg text-sm transition-colors",
+                                        selectedCategory === cat.slug
+                                            ? "bg-primary/10 text-primary font-medium"
+                                            : "text-gray-600 hover:bg-neutral-50"
+                                    )}
+                                >
+                                    {catName}
+                                </button>
+                            </li>
+                        );
+                    })}
+                </ul>
+            </div>
+        </div>
+    );
+
     return (
         <div className="flex flex-col lg:flex-row lg:items-start gap-8 relative mt-4 lg:mt-0">
             {/* Mobile Filter Toggle */}
@@ -146,22 +199,9 @@ export const CatalogClient = ({
                 </button>
             </div>
 
-            {/* Sidebar Filters (Desktop & Mobile Drawer) */}
-            <aside
-                className={cn(
-                    "fixed inset-y-0 left-0 z-[1002] w-[280px] bg-background p-6 shadow-2xl transform transition-transform duration-300 lg:translate-x-0 lg:sticky lg:top-[112px] lg:h-fit lg:w-[250px] lg:shadow-none lg:p-0 lg:bg-transparent lg:block lg:z-30",
-                    isMobileFiltersOpen ? "translate-x-0" : "-translate-x-full"
-                )}
-            >
-                <div className="flex items-center justify-between mb-8 lg:hidden pt-4"> {/* Added pt-4 for mobile safe area */}
-                    <h2 className="text-xl font-bold font-serif text-text-main">{t('filters')}</h2>
-                    <button onClick={() => setIsMobileFiltersOpen(false)} className="p-2">
-                        <X size={24} />
-                    </button>
-                </div>
-
-                {/* Desktop Search */}
-                <div className="hidden lg:block relative mb-8">
+            {/* Desktop Sidebar Filters */}
+            <aside className="hidden lg:block lg:sticky lg:top-[112px] lg:h-fit lg:w-[250px] lg:flex-shrink-0">
+                <div className="relative mb-8">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                     <input
                         type="text"
@@ -171,53 +211,27 @@ export const CatalogClient = ({
                         className="w-full pl-10 pr-4 py-2 bg-card border border-neutral-light rounded-lg focus:outline-none focus:border-primary transition-all text-sm"
                     />
                 </div>
-
-                <div className="space-y-6">
-                    <div>
-                        <h3 className="font-semibold text-text-main mb-4">{t('categories')}</h3>
-                        <ul className="space-y-2">
-                            <li>
-                                <button
-                                    onClick={() => { updateCategory("all"); setIsMobileFiltersOpen(false); }}
-                                    className={cn(
-                                        "w-full text-left px-3 py-2 rounded-lg text-sm transition-colors",
-                                        selectedCategory === "all"
-                                            ? "bg-primary/10 text-primary font-medium"
-                                            : "text-gray-600 hover:bg-neutral-50"
-                                    )}
-                                >
-                                    {t('all')}
-                                </button>
-                            </li>
-                            {categories.map((cat) => {
-                                const catName = cat[`name_${locale}` as keyof Category] as string | undefined || cat.name;
-                                return (
-                                    <li key={cat.id}>
-                                        <button
-                                            onClick={() => { updateCategory(cat.slug); setIsMobileFiltersOpen(false); }}
-                                            className={cn(
-                                                "w-full text-left px-3 py-2 rounded-lg text-sm transition-colors",
-                                                selectedCategory === cat.slug
-                                                    ? "bg-primary/10 text-primary font-medium"
-                                                    : "text-gray-600 hover:bg-neutral-50"
-                                            )}
-                                        >
-                                            {catName}
-                                        </button>
-                                    </li>
-                                );
-                            })}
-                        </ul>
-                    </div>
-                </div>
+                {filtersContent}
             </aside>
 
-            {/* Overlay for mobile */}
-            {isMobileFiltersOpen && (
-                <div
-                    className="fixed inset-0 bg-black/50 z-30 lg:hidden"
-                    onClick={() => setIsMobileFiltersOpen(false)}
-                />
+            {/* Mobile Filters Drawer */}
+            {canUsePortal && isMobileFiltersOpen && createPortal(
+                <>
+                    <div
+                        className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[1100] lg:hidden"
+                        onClick={() => setIsMobileFiltersOpen(false)}
+                    />
+                    <aside className="fixed inset-y-0 left-0 z-[1101] w-[280px] max-w-[86vw] bg-background p-6 shadow-2xl lg:hidden overflow-y-auto">
+                        <div className="flex items-center justify-between mb-8 pt-4">
+                            <h2 className="text-xl font-bold font-serif text-text-main">{t('filters')}</h2>
+                            <button onClick={() => setIsMobileFiltersOpen(false)} className="p-2">
+                                <X size={24} />
+                            </button>
+                        </div>
+                        {filtersContent}
+                    </aside>
+                </>,
+                document.body
             )}
 
             {/* Product Grid */}
