@@ -305,6 +305,9 @@
         "title": "Manage Categories",
         "addNew": "Add New Category",
         "edit": "Edit Category",
+        "saveOrder": "Save Order",
+        "orderSaved": "Order saved successfully!",
+        "orderSaveFailed": "Failed to save order",
         "table": {
             "image": "Image",
             "name": "Name",

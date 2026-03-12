@@ -17,7 +17,10 @@ export async function GET(request: Request) {
         
         const categories = await prisma.category.findMany({
             where: includeDeleted ? {} : { deletedAt: null },
-            orderBy: { createdAt: 'desc' }
+            orderBy: [
+                { sortOrder: 'asc' },
+                { createdAt: 'asc' }
+            ]
         });
         return NextResponse.json(categories);
     } catch (error) {
@@ -51,11 +54,17 @@ export async function POST(req: Request) {
         }
 
         const wasRestored = Boolean(existing?.deletedAt);
+        const maxOrder = await prisma.category.aggregate({
+            _max: { sortOrder: true }
+        });
+        const nextSortOrder = (maxOrder._max.sortOrder ?? -1) + 1;
+
         const category = await findOrRestoreCategoryBySlug(rSlug, {
             name,
             name_ka,
             name_ru,
             image,
+            sortOrder: wasRestored ? undefined : nextSortOrder,
         });
 
         return NextResponse.json(category, { status: wasRestored ? 200 : 201 });

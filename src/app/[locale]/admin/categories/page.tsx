@@ -2,7 +2,7 @@
 /* eslint-disable @next/next/no-img-element */
 
 import { useState, useEffect } from "react";
-import { Trash2, Plus, RefreshCw, X, Pencil } from "lucide-react";
+import { Trash2, Plus, RefreshCw, X, Pencil, GripVertical, Save } from "lucide-react";
 import { useTranslations, useLocale } from "next-intl";
 import { ImageInput } from "@/components/admin/ImageInput";
 import { BulkSelectionBar } from "@/components/admin/BulkSelectionBar";
@@ -16,6 +16,7 @@ interface Category {
     name_ru?: string;
     slug: string;
     image?: string;
+    sortOrder?: number;
 }
 
 export default function AdminCategoriesPage() {
@@ -30,6 +31,9 @@ export default function AdminCategoriesPage() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
     const [isBulkDeleting, setIsBulkDeleting] = useState(false);
+    const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+    const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+    const [hasOrderChanged, setHasOrderChanged] = useState(false);
 
     const [isEditing, setIsEditing] = useState(false);
     const [editId, setEditId] = useState<string | null>(null);
@@ -54,7 +58,10 @@ export default function AdminCategoriesPage() {
         setIsLoading(true);
         fetch("/api/categories")
             .then((res) => res.json())
-            .then((data) => setCategories(Array.isArray(data) ? data : []))
+            .then((data) => {
+                setCategories(Array.isArray(data) ? data : []);
+                setHasOrderChanged(false);
+            })
             .finally(() => setIsLoading(false));
     };
 
@@ -143,6 +150,66 @@ export default function AdminCategoriesPage() {
         setNewItem({ name: "", name_ka: "", name_ru: "", slug: "", image: "" });
     };
 
+    const handleDragStart = (index: number) => {
+        setDraggedIndex(index);
+    };
+
+    const handleDragOver = (e: React.DragEvent, index: number) => {
+        e.preventDefault();
+        if (draggedIndex === null || draggedIndex === index) return;
+        setDragOverIndex(index);
+    };
+
+    const handleDrop = (e: React.DragEvent, dropIndex: number) => {
+        e.preventDefault();
+        if (draggedIndex === null || draggedIndex === dropIndex) {
+            setDraggedIndex(null);
+            setDragOverIndex(null);
+            return;
+        }
+
+        const reordered = [...categories];
+        const draggedItem = reordered[draggedIndex];
+        reordered.splice(draggedIndex, 1);
+        reordered.splice(dropIndex, 0, draggedItem);
+
+        setCategories(reordered);
+        setHasOrderChanged(true);
+        setDraggedIndex(null);
+        setDragOverIndex(null);
+    };
+
+    const handleDragEnd = () => {
+        setDraggedIndex(null);
+        setDragOverIndex(null);
+    };
+
+    const saveOrder = async () => {
+        try {
+            const updates = categories.map((category, index) => ({
+                id: category.id,
+                sortOrder: index
+            }));
+
+            const res = await fetch("/api/categories/reorder", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ categories: updates })
+            });
+
+            if (res.ok) {
+                setHasOrderChanged(false);
+                alert(t("orderSaved"));
+                fetchCategories();
+            } else {
+                alert(t("orderSaveFailed"));
+            }
+        } catch (error) {
+            console.error("Error saving category order:", error);
+            alert(t("orderSaveFailed"));
+        }
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsSubmitting(true);
@@ -190,9 +257,20 @@ export default function AdminCategoriesPage() {
         <div className="max-w-6xl mx-auto space-y-8">
             <div className="flex items-center justify-between">
                 <h1 className="text-3xl font-bold font-serif text-foreground">{t("title")}</h1>
-                <button onClick={fetchCategories} className="p-2 hover:bg-muted rounded-full transition-colors">
-                    <RefreshCw size={20} />
-                </button>
+                <div className="flex items-center justify-end gap-2">
+                    {hasOrderChanged && (
+                        <button
+                            onClick={saveOrder}
+                            className="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg font-medium hover:bg-green-600 transition-colors"
+                        >
+                            <Save size={18} />
+                            {t("saveOrder")}
+                        </button>
+                    )}
+                    <button onClick={fetchCategories} className="p-2 hover:bg-muted rounded-full transition-colors">
+                        <RefreshCw size={20} />
+                    </button>
+                </div>
             </div>
 
             <div className="bg-card border border-border p-6 rounded-xl shadow-sm">
@@ -276,8 +354,16 @@ export default function AdminCategoriesPage() {
 
             <div className="bg-card border border-border rounded-xl shadow-sm overflow-hidden">
                 <div className="space-y-3 p-3 md:hidden">
-                    {categories.map((category) => (
-                        <div key={category.id} className="rounded-lg border border-border/80 bg-background/50 p-3">
+                    {categories.map((category, index) => (
+                        <div
+                            key={category.id}
+                            className={`rounded-lg border border-border/80 bg-background/50 p-3 ${draggedIndex === index ? "opacity-50" : ""}`}
+                            draggable
+                            onDragStart={() => handleDragStart(index)}
+                            onDragOver={(e) => handleDragOver(e, index)}
+                            onDrop={(e) => handleDrop(e, index)}
+                            onDragEnd={handleDragEnd}
+                        >
                             <div className="flex items-start gap-3">
                                 <label className="pt-1">
                                     <input
@@ -287,6 +373,7 @@ export default function AdminCategoriesPage() {
                                         className="h-4 w-4 rounded border-border bg-background text-primary focus:ring-primary/40"
                                     />
                                 </label>
+                                <div className="pt-1 text-muted-foreground"><GripVertical size={16} /></div>
                                 <div className="h-14 w-14 shrink-0 overflow-hidden rounded-md bg-muted">
                                     {category.image ? (
                                         <img src={transformImageLink(category.image)} alt={category.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
@@ -325,6 +412,7 @@ export default function AdminCategoriesPage() {
                                         className="h-4 w-4 rounded border-border bg-background text-primary focus:ring-primary/40"
                                     />
                                 </th>
+                                <th className="px-2 py-4 font-bold whitespace-nowrap w-8"></th>
                                 <th className="px-6 py-4 font-bold whitespace-nowrap">{t("table.image")}</th>
                                 <th className="px-6 py-4 font-bold min-w-[240px]">{t("table.name")}</th>
                                 <th className="px-6 py-4 font-bold whitespace-nowrap min-w-[180px]">{t("table.slug")}</th>
@@ -332,8 +420,16 @@ export default function AdminCategoriesPage() {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-border">
-                            {categories.map((category) => (
-                                <tr key={category.id} className="hover:bg-muted/30 transition-colors">
+                            {categories.map((category, index) => (
+                                <tr
+                                    key={category.id}
+                                    className={`hover:bg-muted/30 transition-colors cursor-move ${dragOverIndex === index ? "border-t-2 border-primary" : ""} ${draggedIndex === index ? "opacity-50" : ""}`}
+                                    draggable
+                                    onDragStart={() => handleDragStart(index)}
+                                    onDragOver={(e) => handleDragOver(e, index)}
+                                    onDrop={(e) => handleDrop(e, index)}
+                                    onDragEnd={handleDragEnd}
+                                >
                                     <td className="px-2 py-4">
                                         <input
                                             type="checkbox"
@@ -342,6 +438,7 @@ export default function AdminCategoriesPage() {
                                             className="h-4 w-4 rounded border-border bg-background text-primary focus:ring-primary/40"
                                         />
                                     </td>
+                                    <td className="px-2 py-4 text-muted-foreground"><GripVertical size={18} /></td>
                                     <td className="px-6 py-4">
                                         {category.image ? (
                                             <div className="w-12 h-12 rounded overflow-hidden bg-neutral-100">
@@ -366,7 +463,7 @@ export default function AdminCategoriesPage() {
                             ))}
                             {categories.length === 0 && (
                                 <tr>
-                                    <td colSpan={5} className="px-6 py-8 text-center text-muted-foreground">No categories</td>
+                                    <td colSpan={6} className="px-6 py-8 text-center text-muted-foreground">No categories</td>
                                 </tr>
                             )}
                         </tbody>

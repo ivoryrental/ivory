@@ -5,6 +5,7 @@ interface CategorySeedData {
     name_ka?: string | null;
     name_ru?: string | null;
     image?: string | null;
+    sortOrder?: number;
 }
 
 function slugifyCategory(value: string): string {
@@ -33,6 +34,7 @@ export async function findOrRestoreCategoryBySlug(
                 name_ka: data.name_ka ?? null,
                 name_ru: data.name_ru ?? null,
                 image: data.image ?? null,
+                sortOrder: data.sortOrder ?? 0,
             },
         });
     }
@@ -49,6 +51,7 @@ export async function findOrRestoreCategoryBySlug(
     if (data.name_ka !== undefined) updateData.name_ka = data.name_ka;
     if (data.name_ru !== undefined) updateData.name_ru = data.name_ru;
     if (data.image !== undefined) updateData.image = data.image;
+    if (data.sortOrder !== undefined) updateData.sortOrder = data.sortOrder;
 
     return prisma.category.update({
         where: { id: existing.id },

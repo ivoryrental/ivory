@@ -91,7 +91,11 @@ export default async function CatalogPage({
 
     // Only fetch active categories
     const categories = await prisma.category.findMany({
-        where: { deletedAt: null }
+        where: { deletedAt: null },
+        orderBy: [
+            { sortOrder: 'asc' },
+            { createdAt: 'asc' }
+        ]
     });
 
     // Transform products to match CatalogClient interface if necessary
