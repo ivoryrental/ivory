@@ -2,7 +2,7 @@
 
 import { Plus, Trash2, GripVertical } from "lucide-react";
 import { Reorder, useDragControls } from "framer-motion";
-import { transformImageLink } from "@/lib/utils";
+import { normalizeImageLink, transformImageLink } from "@/lib/utils";
 import NextImage from "next/image";
 import { useTranslations } from "next-intl";
 
@@ -68,7 +68,7 @@ export const ImageArrayInput = ({
         const trimmedUrl = pendingUrl.trim();
         if (!trimmedUrl) return;
 
-        const finalUrl = transformImageLink(trimmedUrl);
+        const finalUrl = normalizeImageLink(trimmedUrl);
 
         if (finalUrl === "INVALID_FOLDER_LINK") {
             alert(t('invalidDriveLink'));

@@ -6,7 +6,7 @@ import { Trash2, Plus, RefreshCw, X, GripVertical, Save } from "lucide-react";
 import { useTranslations, useLocale } from "next-intl";
 import { ImageArrayInput } from "@/components/admin/ImageArrayInput";
 import { BulkSelectionBar } from "@/components/admin/BulkSelectionBar";
-import { transformImageLink, getLocalized, formatPrice } from "@/lib/utils";
+import { normalizeImageLink, transformImageLink, getLocalized, formatPrice } from "@/lib/utils";
 import { useLocalizedNativeValidation } from "@/lib/native-validation";
 import NextImage from "next/image";
 
@@ -257,9 +257,13 @@ export default function AdminProductsPage() {
             const finalImages = [...newItem.images];
             const trimmedPending = pendingImage.trim();
             if (trimmedPending) {
-                const transformedPending = transformImageLink(trimmedPending);
-                if (!finalImages.includes(transformedPending)) {
-                    finalImages.push(transformedPending);
+                const normalizedPending = normalizeImageLink(trimmedPending);
+                if (normalizedPending === "INVALID_FOLDER_LINK") {
+                    alert("Please use a direct image URL, not a Google Drive folder link.");
+                    return;
+                }
+                if (!finalImages.includes(normalizedPending)) {
+                    finalImages.push(normalizedPending);
                 }
             }
 
@@ -274,7 +278,12 @@ export default function AdminProductsPage() {
             if (res.ok) {
                 cancelEdit();
                 fetchProducts();
+                return;
             }
+
+            const errorData = await res.json().catch(() => null) as { error?: string; details?: string[] } | null;
+            const detailMessage = errorData?.details?.length ? `\n${errorData.details.join("\n")}` : "";
+            alert(`${errorData?.error || "Failed to save product"}${detailMessage}`);
         } finally {
             setIsSubmitting(false);
         }
@@ -336,7 +345,7 @@ export default function AdminProductsPage() {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div className="space-y-1">
                             <label className="text-xs font-semibold uppercase">{t("description")} (EN)</label>
-                            <input className="w-full px-3 py-2 rounded-md border border-input bg-background" value={newItem.description} onChange={(e) => setNewItem({ ...newItem, description: e.target.value })} />
+                            <input required className="w-full px-3 py-2 rounded-md border border-input bg-background" value={newItem.description} onChange={(e) => setNewItem({ ...newItem, description: e.target.value })} />
                         </div>
                         <div className="space-y-1">
                             <label className="text-xs font-semibold uppercase">{t("description")} (KA)</label>
@@ -351,7 +360,7 @@ export default function AdminProductsPage() {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div className="space-y-1">
                             <label className="text-xs font-semibold uppercase block">{t("category")}</label>
-                            <select className="w-full px-3 py-2 rounded-md border border-input bg-background" value={newItem.category} onChange={(e) => setNewItem({ ...newItem, category: e.target.value })}>
+                            <select required className="w-full px-3 py-2 rounded-md border border-input bg-background" value={newItem.category} onChange={(e) => setNewItem({ ...newItem, category: e.target.value })}>
                                 <option value="">{t("selectCategory")}</option>
                                 {categories.map((cat) => (
                                     <option key={cat.id} value={cat.slug}>{cat.name}</option>

@@ -1,4 +1,31 @@
 import { z } from 'zod';
+import { normalizeImageLink } from '@/lib/utils';
+
+function normalizeSubmittedImageUrl(value: unknown) {
+    if (typeof value !== "string") return value;
+
+    const trimmed = value.trim();
+    if (!trimmed) return trimmed;
+
+    if (trimmed.startsWith("/api/image?url=")) {
+        try {
+            const parsed = new URL(trimmed, "https://ivory.ge");
+            const source = parsed.searchParams.get("url");
+            if (source) {
+                return normalizeImageLink(decodeURIComponent(source));
+            }
+        } catch {
+            return trimmed;
+        }
+    }
+
+    return normalizeImageLink(trimmed);
+}
+
+const imageUrlSchema = z.preprocess(
+    (val) => normalizeSubmittedImageUrl(val),
+    z.string().url().max(1000)
+);
 
 // Product validation schemas
 export const productSchema = z.object({
@@ -11,7 +38,7 @@ export const productSchema = z.object({
     // Accept string or number, coerce to number, validate positive
     price: z.coerce.number().positive('Price must be positive'),
     category: z.string().min(1, 'Category is required'),
-    images: z.array(z.string().url().max(1000)).max(25).default([]),
+    images: z.array(imageUrlSchema).max(25).default([]),
     // Normalize empty strings to null for optional URL
     videoUrl: z.preprocess(
         (val) => (val === '' || val === undefined ? null : val),
@@ -47,7 +74,7 @@ export const serviceSchema = z.object({
     description: z.string().min(1, 'Description is required').max(5000),
     description_ka: z.string().max(5000).optional(),
     description_ru: z.string().max(5000).optional(),
-    images: z.array(z.string().url().max(1000)).max(25).default([]),
+    images: z.array(imageUrlSchema).max(25).default([]),
     // Normalize empty strings to null for optional URL
     videoUrl: z.preprocess(
         (val) => (val === '' || val === undefined ? null : val),

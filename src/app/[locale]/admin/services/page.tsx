@@ -6,7 +6,7 @@ import { useTranslations, useLocale } from "next-intl";
 import { Plus, Pencil, Trash2, X, Image as ImageIcon, GripVertical, Save, RefreshCw } from "lucide-react";
 import { ImageArrayInput } from "@/components/admin/ImageArrayInput";
 import { BulkSelectionBar } from "@/components/admin/BulkSelectionBar";
-import { transformImageLink, getLocalized } from "@/lib/utils";
+import { normalizeImageLink, transformImageLink, getLocalized } from "@/lib/utils";
 import { useLocalizedNativeValidation } from "@/lib/native-validation";
 
 interface ServiceFromAPI {
@@ -110,9 +110,13 @@ export default function AdminServicesPage() {
         const finalImages = [...(currentService.images || [])];
         const trimmedPending = pendingImage.trim();
         if (trimmedPending) {
-            const transformedPending = transformImageLink(trimmedPending);
-            if (!finalImages.includes(transformedPending)) {
-                finalImages.push(transformedPending);
+            const normalizedPending = normalizeImageLink(trimmedPending);
+            if (normalizedPending === "INVALID_FOLDER_LINK") {
+                alert("Please use a direct image URL, not a Google Drive folder link.");
+                return;
+            }
+            if (!finalImages.includes(normalizedPending)) {
+                finalImages.push(normalizedPending);
             }
         }
 
@@ -121,11 +125,18 @@ export default function AdminServicesPage() {
             images: finalImages
         };
 
-        await fetch(url, {
+        const res = await fetch(url, {
             method,
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payload),
         });
+
+        if (!res.ok) {
+            const errorData = await res.json().catch(() => null) as { error?: string; details?: string[] } | null;
+            const detailMessage = errorData?.details?.length ? `\n${errorData.details.join("\n")}` : "";
+            alert(`${errorData?.error || "Failed to save service"}${detailMessage}`);
+            return;
+        }
 
         setIsEditing(false);
         setCurrentService({ images: [] });
