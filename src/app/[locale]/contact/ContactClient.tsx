@@ -8,6 +8,7 @@ import { SupportedLocale } from "@/lib/settings-shared";
 import { useCart } from "@/components/providers/CartProvider";
 import { formatPrice } from "@/lib/utils";
 import { useLocalizedNativeValidation } from "@/lib/native-validation";
+import { trackMetaEvent } from "@/components/analytics/MetaPixelUtils";
 
 export function ContactClient() {
     const t = useTranslations('common');
@@ -45,6 +46,14 @@ export function ContactClient() {
             });
 
             if (res.ok) {
+                trackMetaEvent('Lead', {
+                    content_name: 'Contact Form',
+                    content_category: items.length > 0 ? 'Order Request' : 'General Inquiry',
+                    currency: items.length > 0 ? 'GEL' : undefined,
+                    value: items.length > 0 ? totalPrice : undefined,
+                    num_items: items.reduce((sum, item) => sum + item.quantity, 0),
+                    content_ids: items.map((item) => item.id),
+                });
                 setStatus('success');
                 setFormData({ name: '', email: '', message: '', phone: '' });
                 clearCart();

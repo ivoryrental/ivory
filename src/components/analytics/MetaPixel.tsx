@@ -3,22 +3,7 @@
 import { useEffect, useRef } from "react";
 import Script from "next/script";
 import { usePathname, useSearchParams } from "next/navigation";
-
-const META_PIXEL_ID = "2449675508796473";
-
-declare global {
-    interface Window {
-        fbq?: {
-            (...args: unknown[]): void;
-            callMethod?: (...args: unknown[]) => void;
-            queue?: unknown[][];
-            push?: (...args: unknown[]) => void;
-            loaded?: boolean;
-            version?: string;
-        };
-        _fbq?: Window["fbq"];
-    }
-}
+import { META_PIXEL_ID, trackMetaEvent } from "@/components/analytics/MetaPixelUtils";
 
 interface MetaPixelProps {
     nonce?: string;
@@ -41,7 +26,7 @@ export function MetaPixel({ nonce }: MetaPixelProps) {
             return;
         }
 
-        window.fbq?.("track", "PageView");
+        trackMetaEvent("PageView");
     }, [isAdminRoute, pathname, search]);
 
     if (isAdminRoute) {

@@ -8,6 +8,7 @@ import { ProductGallery } from "@/components/features/ProductGallery";
 import { getBaseMetadata } from "@/lib/metadata";
 import { Metadata } from 'next';
 import { headers } from "next/headers";
+import { MetaPixelViewContent } from "@/components/analytics/MetaPixelViewContent";
 
 interface Props {
     params: Promise<{ id: string; locale: string }>;
@@ -100,6 +101,12 @@ export default async function ProductPage({ params }: Props) {
 
     return (
         <div className="container mx-auto px-4 py-8">
+            <MetaPixelViewContent
+                productId={product.id}
+                name={name}
+                category={categoryName}
+                price={product.price}
+            />
             <Link
                 href="/catalog"
                 className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-8 transition-colors"
