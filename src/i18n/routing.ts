@@ -6,7 +6,10 @@ export const routing = defineRouting({
     locales: ['en', 'ka', 'ru'],
 
     // Used when no locale matches
-    defaultLocale: 'ka'
+    defaultLocale: 'ka',
+
+    // Always fall back to Georgian for unprefixed entries like `/`
+    localeDetection: false
 });
 
 // Lightweight wrappers around Next.js' navigation APIs

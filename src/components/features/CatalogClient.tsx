@@ -267,7 +267,7 @@ export const CatalogClient = ({
                                 <button
                                     disabled={currentPage <= 1}
                                     onClick={() => updatePage(currentPage - 1)}
-                                    className="px-4 py-2 border border-border rounded-lg bg-white disabled:opacity-50 hover:bg-neutral-50 transition-colors text-sm font-medium"
+                                    className="px-4 py-2 border border-border rounded-lg bg-card text-card-foreground shadow-sm transition-colors text-sm font-medium enabled:hover:bg-secondary disabled:cursor-not-allowed disabled:opacity-50 disabled:text-muted-foreground"
                                 >
                                     {t('prev')}
                                 </button>
@@ -277,7 +277,7 @@ export const CatalogClient = ({
                                 <button
                                     disabled={currentPage >= Math.ceil(totalProducts / productsPerPage)}
                                     onClick={() => updatePage(currentPage + 1)}
-                                    className="px-4 py-2 border border-border rounded-lg bg-white disabled:opacity-50 hover:bg-neutral-50 transition-colors text-sm font-medium"
+                                    className="px-4 py-2 border border-border rounded-lg bg-card text-card-foreground shadow-sm transition-colors text-sm font-medium enabled:hover:bg-secondary disabled:cursor-not-allowed disabled:opacity-50 disabled:text-muted-foreground"
                                 >
                                     {t('next')}
                                 </button>
