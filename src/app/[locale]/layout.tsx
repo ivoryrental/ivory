@@ -14,6 +14,7 @@ import { CartProvider } from "@/components/providers/CartProvider";
 import { Cart } from "@/components/features/Cart";
 import { NatureBackground } from "@/components/layout/NatureBackground";
 import { FaviconAnimator } from "@/components/layout/FaviconAnimator";
+import { MetaPixel } from "@/components/analytics/MetaPixel";
 
 const geistSans = Geist({
     variable: "--font-geist-sans",
@@ -86,6 +87,7 @@ export default async function LocaleLayout({
                     <ThemeProvider nonce={nonce}>
                         <SettingsProvider settings={settings}>
                             <CartProvider>
+                                <MetaPixel nonce={nonce} />
                                 <NatureBackground />
                                 <FaviconAnimator />
                                 <Header />

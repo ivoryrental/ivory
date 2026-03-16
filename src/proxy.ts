@@ -22,9 +22,25 @@ function generateNonce(): string {
 function buildCsp(nonce: string): string {
     const isProduction = process.env.NODE_ENV === 'production';
 
-    const scriptDirectives = [`'self'`, `'nonce-${nonce}'`];
+    const scriptDirectives = [`'self'`, `'nonce-${nonce}'`, 'https://connect.facebook.net'];
+    const imageDirectives = [
+        "'self'",
+        'data:',
+        'blob:',
+        'https://drive.google.com',
+        'https://drive.usercontent.google.com',
+        'https://lh3.googleusercontent.com',
+        'https://*.googleusercontent.com',
+        'https://www.facebook.com',
+    ];
+    const connectDirectives = [
+        "'self'",
+        'https://connect.facebook.net',
+        'https://www.facebook.com',
+    ];
     if (!isProduction) {
         scriptDirectives.push(`'unsafe-eval'`);
+        connectDirectives.push('ws:', 'wss:', 'http://localhost:*', 'http://127.0.0.1:*');
     }
 
     return [
@@ -36,11 +52,9 @@ function buildCsp(nonce: string): string {
         `script-src ${scriptDirectives.join(' ')}`,
         "script-src-attr 'none'",
         "style-src 'self' 'unsafe-inline'",
-        "img-src 'self' data: blob: https://drive.google.com https://drive.usercontent.google.com https://lh3.googleusercontent.com https://*.googleusercontent.com",
+        `img-src ${imageDirectives.join(' ')}`,
         "font-src 'self' data:",
-        isProduction
-            ? "connect-src 'self'"
-            : "connect-src 'self' ws: wss: http://localhost:* http://127.0.0.1:*",
+        `connect-src ${connectDirectives.join(' ')}`,
         "frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com https://drive.google.com",
         ...(isProduction ? ["upgrade-insecure-requests"] : []),
     ].join('; ');
