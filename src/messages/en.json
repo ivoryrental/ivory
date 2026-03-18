@@ -32,7 +32,8 @@
         "terms": "Terms & Conditions",
         "callUs": "550 001 701",
         "since": "Since 2024",
-        "contactBtn": "Contact Us"
+        "contactBtn": "Contact Us",
+        "yourEmail": "Your email"
     },
     "about": {
         "title": "About Us",
@@ -92,7 +93,8 @@
         "settings": "Settings",
         "logout": "Logout",
         "overview": "Overview",
-        "restore": "Restore"
+        "restore": "Restore",
+        "messages": "Messages"
     },
     "adminBulk": {
         "selectAll": "Select all",
@@ -364,5 +366,14 @@
             "s5_title": "5. Disclaimer",
             "s5_text": "The site is provided on an AS-IS and AS-AVAILABLE basis. You agree that your use of the site and our services will be at your sole risk."
         }
+    },
+    "adminMessages": {
+        "title": "Messages",
+        "description": "Contact form messages submitted without selected products appear here.",
+        "loading": "Loading messages...",
+        "empty": "No messages yet",
+        "emptyDescription": "New contact form messages will appear here.",
+        "noMessage": "No message provided.",
+        "newBadge": "New"
     }
 }

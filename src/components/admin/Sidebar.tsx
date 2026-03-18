@@ -3,7 +3,7 @@
 import { usePathname } from "@/i18n/routing";
 import { ThemeLink as Link } from "@/components/ui/ThemeLink";
 import { useTranslations } from "next-intl";
-import { LayoutDashboard, Package, CalendarRange, Settings, Briefcase, Tags, History, Trash2 } from "lucide-react";
+import { LayoutDashboard, Package, CalendarRange, Settings, Briefcase, Tags, History, Trash2, MessageSquareText } from "lucide-react";
 import { LogoutButton } from "./LogoutButton";
 import { cn } from "@/lib/utils";
 
@@ -44,6 +44,7 @@ export const Sidebar = ({ className, onClose }: SidebarProps) => {
         { href: "/admin/categories", label: t("categories"), icon: Tags },
         { href: "/admin/services", label: t("services"), icon: Briefcase },
         { href: "/admin/bookings", label: t("bookings"), icon: CalendarRange },
+        { href: "/admin/messages", label: t("messages"), icon: MessageSquareText },
         { href: "/admin/bookings/history", label: t("history"), icon: History },
         { href: "/admin/trash", label: t("trash"), icon: Trash2 },
         { href: "/admin/settings", label: t("settings"), icon: Settings },

@@ -136,7 +136,7 @@ export function ContactClient() {
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium mb-1">{t('email') || 'Email'}</label>
+                                <label className="block text-sm font-medium mb-1">{t('yourEmail') || 'Your email'}</label>
                                 <input
                                     required
                                     type="email"

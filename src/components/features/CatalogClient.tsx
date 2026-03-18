@@ -89,7 +89,8 @@ export const CatalogClient = ({
         // Only push if changed to avoid loops or unnecessary pushes
         if (params.toString() !== searchParams.toString()) {
             params.delete("page"); // Reset grid to page 1
-            router.push(`${pathname}?${params.toString()}`, { scroll: false });
+            const nextUrl = params.toString() ? `${pathname}?${params.toString()}` : pathname;
+            router.push(nextUrl, { scroll: false });
         }
     }, [debouncedQuery, pathname, router, searchParams]);
 
@@ -105,14 +106,16 @@ export const CatalogClient = ({
         if (searchQuery) params.set("search", searchQuery);
 
         params.delete("page"); // Reset grid to page 1
-        router.push(`${pathname}?${params.toString()}`, { scroll: false });
+        const nextUrl = params.toString() ? `${pathname}?${params.toString()}` : pathname;
+        router.push(nextUrl, { scroll: false });
         setSelectedCategory(category);
     };
 
     const updatePage = (newPage: number) => {
         const params = new URLSearchParams(searchParams.toString());
         params.set("page", newPage.toString());
-        router.push(`${pathname}?${params.toString()}`, { scroll: true });
+        const nextUrl = params.toString() ? `${pathname}?${params.toString()}` : pathname;
+        router.push(nextUrl, { scroll: true });
     };
 
     // Client-side search filtering (only filters the *current page* results unless we move search to server too)
