@@ -9,7 +9,7 @@ const ogLocales: Record<string, string> = {
     ru: 'ru_RU'
 };
 
-const shareImageUrl = `${baseUrl}/og-image-icoyes.jpg`;
+const shareImageUrl = `${baseUrl}/og-image-icoyes2.jpg`;
 
 /**
  * Generates base metadata including canonicals and hreflangs for a given locale and path.
