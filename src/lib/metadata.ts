@@ -28,6 +28,18 @@ function normalizeMetadataText(value?: string, maxLength: number = 200): string 
     return normalized.length > maxLength ? `${normalized.slice(0, maxLength - 1).trimEnd()}…` : normalized;
 }
 
+function inferImageType(imageUrl: string): string | undefined {
+    if (imageUrl.includes('/api/og-image') || imageUrl.endsWith('.png')) {
+        return 'image/png';
+    }
+
+    if (imageUrl.endsWith('.jpg') || imageUrl.endsWith('.jpeg')) {
+        return 'image/jpeg';
+    }
+
+    return undefined;
+}
+
 export function getSocialImageUrl(imageUrl?: string): string {
     if (!imageUrl) {
         return shareImageUrl;
@@ -67,6 +79,7 @@ export function getBaseMetadata(locale: string, path: string = '', options: Meta
     const description = normalizeMetadataText(options.description, 200);
     const imageUrl = getSocialImageUrl(options.imageUrl);
     const imageAlt = normalizeMetadataText(options.imageAlt, 120) || 'IVORY share preview';
+    const imageType = inferImageType(imageUrl);
 
     return {
         metadataBase: new URL(baseUrl),
@@ -91,6 +104,8 @@ export function getBaseMetadata(locale: string, path: string = '', options: Meta
             images: [
                 {
                     url: imageUrl,
+                    secureUrl: imageUrl,
+                    ...(imageType ? { type: imageType } : {}),
                     width: 1200,
                     height: 630,
                     alt: imageAlt,

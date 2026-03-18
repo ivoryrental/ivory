@@ -5,9 +5,8 @@ import { ArrowLeft, Phone } from "lucide-react";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { ProductGallery } from "@/components/features/ProductGallery";
 import { getAllSettings } from "@/lib/settings";
-import { getBaseMetadata, getRenderedSocialImageUrl } from "@/lib/metadata";
+import { baseUrl, getBaseMetadata } from "@/lib/metadata";
 import { Metadata } from 'next';
-import { safeJsonParse } from "@/lib/utils";
 
 interface Props {
     params: Promise<{ id: string; locale: string }>;
@@ -51,8 +50,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         (service[`title_${locale}` as keyof typeof service] as string | null | undefined) || service.title;
     const localizedDescription =
         (service[`description_${locale}` as keyof typeof service] as string | null | undefined) || service.description;
-    const images = safeJsonParse<string[]>(service.images, []);
-    const imageUrl = getRenderedSocialImageUrl(images[0]);
+    const imageUrl = `${baseUrl}/api/og-image/service/${id}`;
     const baseMetadata = getBaseMetadata(locale, `/services/${id}`, {
         title: localizedTitle,
         description: localizedDescription,
@@ -66,6 +64,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
             images: [
                 {
                     url: imageUrl,
+                    secureUrl: imageUrl,
+                    type: "image/png",
                     width: 1200,
                     height: 630,
                     alt: localizedTitle,

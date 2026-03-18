@@ -9,6 +9,8 @@ const LOCALIZED_ADMIN_ROUTE_PATTERN = /^\/(en|ka|ru)\/admin(?:\/|$)/;
 const ROOT_ADMIN_ROUTE_PATTERN = /^\/admin(?:\/|$)/;
 const LOCALIZED_ADMIN_LOGIN_PATTERN = /^\/(en|ka|ru)\/admin\/login(?:\/|$)/;
 const ROOT_ADMIN_LOGIN_PATTERN = /^\/admin\/login(?:\/|$)/;
+const SOCIAL_CRAWLER_UA_PATTERN =
+    /(facebookexternalhit|facebot|meta-externalagent|twitterbot|linkedinbot|slackbot|discordbot|whatsapp|telegrambot|skypeuripreview|googlebot|bingbot)/i;
 
 function generateNonce(): string {
     const bytes = crypto.getRandomValues(new Uint8Array(16));
@@ -73,6 +75,8 @@ export default async function proxy(request: NextRequest) {
     const csp = buildCsp(nonce);
     const requestHeaders = new Headers(request.headers);
     requestHeaders.set('x-nonce', nonce);
+    const userAgent = request.headers.get('user-agent') ?? '';
+    const isSocialCrawler = SOCIAL_CRAWLER_UA_PATTERN.test(userAgent);
 
     // 0. Rate Limiting (Public POST APIs)
     if (pathname === '/api/contact' && request.method === 'POST') {
@@ -107,6 +111,15 @@ export default async function proxy(request: NextRequest) {
     // 2. Continue request
     if (isApiRoute || (request.method !== 'GET' && request.method !== 'HEAD')) {
         const response = NextResponse.next({
+            request: {
+                headers: requestHeaders,
+            },
+        });
+        return applySecurityHeaders(response, csp, nonce);
+    }
+
+    if (pathname === '/' && isSocialCrawler) {
+        const response = NextResponse.rewrite(new URL('/ka', request.url), {
             request: {
                 headers: requestHeaders,
             },
