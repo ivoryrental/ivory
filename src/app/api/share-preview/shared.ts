@@ -67,15 +67,18 @@ export function buildPreviewHtml({
   <meta property="og:type" content="website" />
   <meta property="og:locale" content="${escapeHtml(locale === "ru" ? "ru_RU" : locale === "en" ? "en_US" : "ka_GE")}" />
   <meta property="og:image" content="${safeImageUrl}" />
+  <meta property="og:image:url" content="${safeImageUrl}" />
   <meta property="og:image:secure_url" content="${safeImageUrl}" />
   <meta property="og:image:type" content="${escapeHtml(imageType)}" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
   <meta property="og:image:alt" content="${safeTitle}" />
   <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:url" content="${safePageUrl}" />
   <meta name="twitter:title" content="${safeTitle}" />
   <meta name="twitter:description" content="${safeDescription}" />
   <meta name="twitter:image" content="${safeImageUrl}" />
+  <meta name="twitter:image:src" content="${safeImageUrl}" />
   <meta name="robots" content="noindex, nofollow" />
   <link rel="canonical" href="${safePageUrl}" />
 </head>

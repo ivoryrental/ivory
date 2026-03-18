@@ -11,6 +11,7 @@ const ogLocales: Record<string, string> = {
 };
 
 const shareImageUrl = `${baseUrl}/og-image-icoyes2.jpg`;
+export const defaultShareImageUrl = shareImageUrl;
 
 interface MetadataOptions {
     title?: string;
