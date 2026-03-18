@@ -62,9 +62,27 @@ function buildCsp(nonce: string): string {
     ].join('; ');
 }
 
-function applySecurityHeaders(response: NextResponse, csp: string, nonce: string): NextResponse {
+function isCrossOriginPreviewAsset(pathname: string): boolean {
+    return (
+        pathname.startsWith('/api/og-image/') ||
+        pathname === '/api/og-image' ||
+        pathname.startsWith('/og-image-')
+    );
+}
+
+function applySecurityHeaders(response: NextResponse, csp: string, nonce: string, pathname: string): NextResponse {
     response.headers.set('Content-Security-Policy', csp);
     response.headers.set('x-nonce', nonce);
+    response.headers.set(
+        'Cross-Origin-Resource-Policy',
+        isCrossOriginPreviewAsset(pathname) ? 'cross-origin' : 'same-origin'
+    );
+
+    if (isCrossOriginPreviewAsset(pathname)) {
+        response.headers.set('Access-Control-Allow-Origin', '*');
+        response.headers.set('Content-Disposition', 'inline');
+    }
+
     return response;
 }
 
@@ -86,7 +104,7 @@ export default async function proxy(request: NextRequest) {
                 { error: 'Too many requests. Please try again later.' },
                 { status: 429, headers: { 'Retry-After': retryAfterSeconds(rateLimit) } }
             );
-            return applySecurityHeaders(response, csp, nonce);
+            return applySecurityHeaders(response, csp, nonce, pathname);
         }
     }
 
@@ -104,7 +122,7 @@ export default async function proxy(request: NextRequest) {
             // Redirect to login, preserving locale if possible or defaulting
             const locale = pathname.match(/^\/(en|ka|ru)/)?.[1] || 'ka';
             const response = NextResponse.redirect(new URL(`/${locale}/admin/login`, request.url));
-            return applySecurityHeaders(response, csp, nonce);
+            return applySecurityHeaders(response, csp, nonce, pathname);
         }
     }
 
@@ -115,7 +133,7 @@ export default async function proxy(request: NextRequest) {
                 headers: requestHeaders,
             },
         });
-        return applySecurityHeaders(response, csp, nonce);
+        return applySecurityHeaders(response, csp, nonce, pathname);
     }
 
     if (isSocialCrawler && !isAdminRoute) {
@@ -129,7 +147,7 @@ export default async function proxy(request: NextRequest) {
                 headers: requestHeaders,
             },
         });
-        return applySecurityHeaders(response, csp, nonce);
+        return applySecurityHeaders(response, csp, nonce, pathname);
     }
 
     const handleI18n = createMiddleware(routing);
@@ -138,7 +156,7 @@ export default async function proxy(request: NextRequest) {
         headers: requestHeaders,
     });
     const response = handleI18n(requestWithNonce);
-    return applySecurityHeaders(response, csp, nonce);
+    return applySecurityHeaders(response, csp, nonce, pathname);
 }
 
 export const config = {
