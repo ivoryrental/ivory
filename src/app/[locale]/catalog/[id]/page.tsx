@@ -2,10 +2,10 @@ import { notFound } from "next/navigation";
 import { ThemeLink as Link } from "@/components/ui/ThemeLink";
 import prisma from "@/lib/prisma";
 import { ArrowLeft } from "lucide-react";
-import { formatPrice, safeJsonParse } from "@/lib/utils";
+import { formatPrice } from "@/lib/utils";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { ProductGallery } from "@/components/features/ProductGallery";
-import { getBaseMetadata } from "@/lib/metadata";
+import { baseUrl, getBaseMetadata } from "@/lib/metadata";
 import { Metadata } from 'next';
 import { headers } from "next/headers";
 import { MetaPixelViewContent } from "@/components/analytics/MetaPixelViewContent";
@@ -62,14 +62,33 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         (product[`name_${locale}` as keyof typeof product] as string | null | undefined) || product.name;
     const localizedDescription =
         (product[`description_${locale}` as keyof typeof product] as string | null | undefined) || product.description;
-    const images = safeJsonParse<string[]>(product.images, []);
-
-    return getBaseMetadata(locale, `/catalog/${id}`, {
+    const imageUrl = `${baseUrl}/api/og-image/product/${id}`;
+    const baseMetadata = getBaseMetadata(locale, `/catalog/${id}`, {
         title: localizedName,
         description: localizedDescription,
-        imageUrl: images[0],
         imageAlt: localizedName,
     });
+
+    return {
+        ...baseMetadata,
+        openGraph: {
+            ...baseMetadata.openGraph,
+            images: [
+                {
+                    url: imageUrl,
+                    secureUrl: imageUrl,
+                    type: "image/png",
+                    width: 1200,
+                    height: 630,
+                    alt: localizedName,
+                },
+            ],
+        },
+        twitter: {
+            ...baseMetadata.twitter,
+            images: [imageUrl],
+        },
+    };
 }
 
 const getEmbedUrl = (url: string) => {
