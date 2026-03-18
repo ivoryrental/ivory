@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { ThemeLink as Link } from "@/components/ui/ThemeLink";
 import prisma from "@/lib/prisma";
 import { ArrowLeft } from "lucide-react";
-import { formatPrice } from "@/lib/utils";
+import { formatPrice, safeJsonParse } from "@/lib/utils";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { ProductGallery } from "@/components/features/ProductGallery";
 import { getBaseMetadata } from "@/lib/metadata";
@@ -38,7 +38,38 @@ interface ProductWithLocalization {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const { id, locale } = await params;
-    return getBaseMetadata(locale, `/catalog/${id}`);
+    const product = await prisma.product.findFirst({
+        where: {
+            id,
+            deletedAt: null
+        },
+        select: {
+            name: true,
+            name_ka: true,
+            name_ru: true,
+            description: true,
+            description_ka: true,
+            description_ru: true,
+            images: true,
+        }
+    });
+
+    if (!product) {
+        return getBaseMetadata(locale, `/catalog/${id}`);
+    }
+
+    const localizedName =
+        (product[`name_${locale}` as keyof typeof product] as string | null | undefined) || product.name;
+    const localizedDescription =
+        (product[`description_${locale}` as keyof typeof product] as string | null | undefined) || product.description;
+    const images = safeJsonParse<string[]>(product.images, []);
+
+    return getBaseMetadata(locale, `/catalog/${id}`, {
+        title: localizedName,
+        description: localizedDescription,
+        imageUrl: images[0],
+        imageAlt: localizedName,
+    });
 }
 
 const getEmbedUrl = (url: string) => {

@@ -7,6 +7,7 @@ import { ProductGallery } from "@/components/features/ProductGallery";
 import { getAllSettings } from "@/lib/settings";
 import { getBaseMetadata } from "@/lib/metadata";
 import { Metadata } from 'next';
+import { safeJsonParse } from "@/lib/utils";
 
 interface Props {
     params: Promise<{ id: string; locale: string }>;
@@ -26,7 +27,38 @@ interface ServiceWithLocalization {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const { id, locale } = await params;
-    return getBaseMetadata(locale, `/services/${id}`);
+    const service = await prisma.service.findFirst({
+        where: {
+            id,
+            deletedAt: null
+        },
+        select: {
+            title: true,
+            title_ka: true,
+            title_ru: true,
+            description: true,
+            description_ka: true,
+            description_ru: true,
+            images: true,
+        }
+    });
+
+    if (!service) {
+        return getBaseMetadata(locale, `/services/${id}`);
+    }
+
+    const localizedTitle =
+        (service[`title_${locale}` as keyof typeof service] as string | null | undefined) || service.title;
+    const localizedDescription =
+        (service[`description_${locale}` as keyof typeof service] as string | null | undefined) || service.description;
+    const images = safeJsonParse<string[]>(service.images, []);
+
+    return getBaseMetadata(locale, `/services/${id}`, {
+        title: localizedTitle,
+        description: localizedDescription,
+        imageUrl: images[0],
+        imageAlt: localizedTitle,
+    });
 }
 
 const getEmbedUrl = (url: string) => {
