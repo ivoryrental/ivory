@@ -11,6 +11,9 @@ const LOCALIZED_ADMIN_LOGIN_PATTERN = /^\/(en|ka|ru)\/admin\/login(?:\/|$)/;
 const ROOT_ADMIN_LOGIN_PATTERN = /^\/admin\/login(?:\/|$)/;
 const SOCIAL_CRAWLER_UA_PATTERN =
     /(facebookexternalhit|facebot|meta-externalagent|twitterbot|linkedinbot|slackbot|discordbot|whatsapp|telegrambot|skypeuripreview|googlebot|bingbot)/i;
+const LOCALIZED_HOME_PATTERN = /^\/(en|ka|ru)$/;
+const LOCALIZED_PRODUCT_PATTERN = /^\/(en|ka|ru)\/catalog\/([^/]+)$/;
+const LOCALIZED_SERVICE_PATTERN = /^\/(en|ka|ru)\/services\/([^/]+)$/;
 
 function generateNonce(): string {
     const bytes = crypto.getRandomValues(new Uint8Array(16));
@@ -118,13 +121,48 @@ export default async function proxy(request: NextRequest) {
         return applySecurityHeaders(response, csp, nonce);
     }
 
-    if (pathname === '/' && isSocialCrawler) {
-        const response = NextResponse.rewrite(new URL('/ka', request.url), {
+    if (isSocialCrawler && pathname === '/') {
+        const response = NextResponse.rewrite(new URL('/api/share-preview/home/ka', request.url), {
             request: {
                 headers: requestHeaders,
             },
         });
         return applySecurityHeaders(response, csp, nonce);
+    }
+
+    if (isSocialCrawler) {
+        const localizedHomeMatch = pathname.match(LOCALIZED_HOME_PATTERN);
+        if (localizedHomeMatch) {
+            const [, locale] = localizedHomeMatch;
+            const response = NextResponse.rewrite(new URL(`/api/share-preview/home/${locale}`, request.url), {
+                request: {
+                    headers: requestHeaders,
+                },
+            });
+            return applySecurityHeaders(response, csp, nonce);
+        }
+
+        const productMatch = pathname.match(LOCALIZED_PRODUCT_PATTERN);
+        if (productMatch) {
+            const [, locale, id] = productMatch;
+            const response = NextResponse.rewrite(new URL(`/api/share-preview/product/${locale}/${id}`, request.url), {
+                request: {
+                    headers: requestHeaders,
+                },
+            });
+            return applySecurityHeaders(response, csp, nonce);
+        }
+
+        const serviceMatch = pathname.match(LOCALIZED_SERVICE_PATTERN);
+        if (serviceMatch) {
+            const [, locale, id] = serviceMatch;
+            const response = NextResponse.rewrite(new URL(`/api/share-preview/service/${locale}/${id}`, request.url), {
+                request: {
+                    headers: requestHeaders,
+                },
+            });
+            return applySecurityHeaders(response, csp, nonce);
+        }
     }
 
     const handleI18n = createMiddleware(routing);
