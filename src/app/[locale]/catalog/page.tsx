@@ -1,6 +1,6 @@
 import prisma from "@/lib/prisma";
 import { CatalogClient } from "@/components/features/CatalogClient";
-import { getBaseMetadata } from "@/lib/metadata";
+import { baseUrl, getBaseMetadata } from "@/lib/metadata";
 import { Metadata } from 'next';
 import { setRequestLocale } from "next-intl/server";
 import { Prisma } from "@prisma/client";
@@ -38,9 +38,105 @@ interface SerializedProduct {
     category: SerializedCategory;
 }
 
-export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
+const CATALOG_METADATA_COPY: Record<string, { title: string; description: string; categoryDescription: (name: string) => string }> = {
+    en: {
+        title: "IVORY Catalog",
+        description: "Browse IVORY inventory rental products for weddings and events.",
+        categoryDescription: (name) => `Browse IVORY catalog filtered by ${name}.`,
+    },
+    ka: {
+        title: "IVORY კატალოგი",
+        description: "დაათვალიერეთ IVORY-ს ინვენტარი და პროდუქტები თქვენი ღონისძიებისთვის.",
+        categoryDescription: (name) => `IVORY კატალოგი არჩეული კატეგორიით: ${name}.`,
+    },
+    ru: {
+        title: "Каталог IVORY",
+        description: "Просмотрите каталог инвентаря IVORY для свадеб и мероприятий.",
+        categoryDescription: (name) => `Каталог IVORY с выбранной категорией: ${name}.`,
+    },
+};
+
+function getLocalizedCategoryName(category: Pick<SerializedCategory, "name" | "name_ka" | "name_ru">, locale: string) {
+    if (locale === "ka" && category.name_ka) return category.name_ka;
+    if (locale === "ru" && category.name_ru) return category.name_ru;
+    return category.name;
+}
+
+export async function generateMetadata({
+    params,
+    searchParams
+}: {
+    params: Promise<{ locale: string }>;
+    searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}): Promise<Metadata> {
     const { locale } = await params;
-    return getBaseMetadata(locale, '/catalog');
+    const resolvedSearchParams = await searchParams;
+    const categorySlug = typeof resolvedSearchParams.category === 'string' ? resolvedSearchParams.category : undefined;
+    const search = typeof resolvedSearchParams.search === 'string' ? resolvedSearchParams.search : undefined;
+    const page = typeof resolvedSearchParams.page === 'string' ? resolvedSearchParams.page : undefined;
+    const pageParams = new URLSearchParams();
+    const copy = CATALOG_METADATA_COPY[locale] ?? CATALOG_METADATA_COPY.ka;
+
+    if (categorySlug) pageParams.set('category', categorySlug);
+    if (search) pageParams.set('search', search);
+    if (page && page !== '1') pageParams.set('page', page);
+
+    const metadataPath = `/catalog${pageParams.toString() ? `?${pageParams.toString()}` : ''}`;
+
+    if (!categorySlug) {
+        return getBaseMetadata(locale, metadataPath, {
+            title: copy.title,
+            description: copy.description,
+        });
+    }
+
+    const category = await prisma.category.findFirst({
+        where: {
+            slug: categorySlug,
+            deletedAt: null,
+        },
+        select: {
+            name: true,
+            name_ka: true,
+            name_ru: true,
+        }
+    });
+
+    if (!category) {
+        return getBaseMetadata(locale, metadataPath, {
+            title: copy.title,
+            description: copy.description,
+        });
+    }
+
+    const localizedCategoryName = getLocalizedCategoryName(category, locale);
+    const imageUrl = `${baseUrl}/api/og-image/category/${categorySlug}`;
+    const baseMetadata = getBaseMetadata(locale, metadataPath, {
+        title: localizedCategoryName,
+        description: copy.categoryDescription(localizedCategoryName),
+        imageAlt: localizedCategoryName,
+    });
+
+    return {
+        ...baseMetadata,
+        openGraph: {
+            ...baseMetadata.openGraph,
+            images: [
+                {
+                    url: imageUrl,
+                    secureUrl: imageUrl,
+                    type: 'image/png',
+                    width: 1200,
+                    height: 630,
+                    alt: localizedCategoryName,
+                },
+            ],
+        },
+        twitter: {
+            ...baseMetadata.twitter,
+            images: [imageUrl],
+        },
+    };
 }
 
 export default async function CatalogPage({

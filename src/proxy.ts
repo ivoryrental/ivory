@@ -12,6 +12,7 @@ const ROOT_ADMIN_LOGIN_PATTERN = /^\/admin\/login(?:\/|$)/;
 const SOCIAL_CRAWLER_UA_PATTERN =
     /(facebookexternalhit|facebot|meta-externalagent|twitterbot|linkedinbot|slackbot|discordbot|whatsapp|telegrambot|skypeuripreview|googlebot|bingbot)/i;
 const LOCALIZED_HOME_PATTERN = /^\/(en|ka|ru)$/;
+const LOCALIZED_CATALOG_PATTERN = /^\/(en|ka|ru)\/catalog$/;
 const LOCALIZED_PRODUCT_PATTERN = /^\/(en|ka|ru)\/catalog\/([^/]+)$/;
 const LOCALIZED_SERVICE_PATTERN = /^\/(en|ka|ru)\/services\/([^/]+)$/;
 
@@ -135,6 +136,19 @@ export default async function proxy(request: NextRequest) {
         if (localizedHomeMatch) {
             const [, locale] = localizedHomeMatch;
             const response = NextResponse.rewrite(new URL(`/api/share-preview/home/${locale}`, request.url), {
+                request: {
+                    headers: requestHeaders,
+                },
+            });
+            return applySecurityHeaders(response, csp, nonce);
+        }
+
+        const catalogMatch = pathname.match(LOCALIZED_CATALOG_PATTERN);
+        if (catalogMatch && request.nextUrl.searchParams.get("category")) {
+            const [, locale] = catalogMatch;
+            const rewriteUrl = new URL(`/api/share-preview/catalog/${locale}`, request.url);
+            rewriteUrl.search = request.nextUrl.search;
+            const response = NextResponse.rewrite(rewriteUrl, {
                 request: {
                     headers: requestHeaders,
                 },
