@@ -10,7 +10,7 @@ const ogLocales: Record<string, string> = {
     ru: 'ru_RU'
 };
 
-const shareImageUrl = `${baseUrl}/og-image-icoyes2.jpg`;
+const shareImageUrl = `${baseUrl}/api/og-image/default`;
 export const defaultShareImageUrl = shareImageUrl;
 
 interface MetadataOptions {
