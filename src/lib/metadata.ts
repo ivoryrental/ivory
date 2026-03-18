@@ -45,6 +45,14 @@ export function getSocialImageUrl(imageUrl?: string): string {
     return transformed.startsWith("/") ? `${baseUrl}${transformed}` : `${baseUrl}/${transformed}`;
 }
 
+export function getRenderedSocialImageUrl(imageUrl?: string): string {
+    if (!imageUrl) {
+        return shareImageUrl;
+    }
+
+    return `${baseUrl}/api/og-image?url=${encodeURIComponent(imageUrl)}`;
+}
+
 /**
  * Generates base metadata including canonicals and hreflangs for a given locale and path.
  * link: https://nextjs.org/docs/app/api-reference/functions/generate-metadata#alternates

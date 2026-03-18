@@ -5,7 +5,7 @@ import { ArrowLeft, Phone } from "lucide-react";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { ProductGallery } from "@/components/features/ProductGallery";
 import { getAllSettings } from "@/lib/settings";
-import { getBaseMetadata } from "@/lib/metadata";
+import { getBaseMetadata, getRenderedSocialImageUrl } from "@/lib/metadata";
 import { Metadata } from 'next';
 import { safeJsonParse } from "@/lib/utils";
 
@@ -52,13 +52,31 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const localizedDescription =
         (service[`description_${locale}` as keyof typeof service] as string | null | undefined) || service.description;
     const images = safeJsonParse<string[]>(service.images, []);
-
-    return getBaseMetadata(locale, `/services/${id}`, {
+    const imageUrl = getRenderedSocialImageUrl(images[0]);
+    const baseMetadata = getBaseMetadata(locale, `/services/${id}`, {
         title: localizedTitle,
         description: localizedDescription,
-        imageUrl: images[0],
         imageAlt: localizedTitle,
     });
+
+    return {
+        ...baseMetadata,
+        openGraph: {
+            ...baseMetadata.openGraph,
+            images: [
+                {
+                    url: imageUrl,
+                    width: 1200,
+                    height: 630,
+                    alt: localizedTitle,
+                },
+            ],
+        },
+        twitter: {
+            ...baseMetadata.twitter,
+            images: [imageUrl],
+        },
+    };
 }
 
 const getEmbedUrl = (url: string) => {
