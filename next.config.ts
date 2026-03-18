@@ -5,6 +5,7 @@ const withNextIntl = createNextIntlPlugin();
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  htmlLimitedBots: /.*/,
   experimental: {
     optimizePackageImports: ["lucide-react", "recharts"],
   },
