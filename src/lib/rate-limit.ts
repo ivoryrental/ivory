@@ -19,11 +19,35 @@ interface MemoryRecord {
 const memoryStore = new Map<string, MemoryRecord>();
 let redisClient: Redis | null | undefined;
 let warnedMissingUpstash = false;
+let warnedUpstashFailure = false;
+let upstashDisabledUntil = 0;
 const limiterCache = new Map<string, Ratelimit>();
+
+function disableUpstashTemporarily(error: unknown) {
+    redisClient = null;
+    limiterCache.clear();
+    upstashDisabledUntil = Date.now() + 60 * 1000;
+
+    if (!warnedUpstashFailure) {
+        console.error(
+            "[RateLimit] Upstash request failed. Falling back to in-memory rate limiting for 60 seconds.",
+            error
+        );
+        warnedUpstashFailure = true;
+    }
+}
 
 function getRedisClient(): Redis | null {
     if (redisClient !== undefined) {
         return redisClient;
+    }
+
+    if (upstashDisabledUntil > Date.now()) {
+        return null;
+    }
+
+    if (warnedUpstashFailure && upstashDisabledUntil <= Date.now()) {
+        warnedUpstashFailure = false;
     }
 
     const url = process.env.UPSTASH_REDIS_REST_URL;
@@ -33,7 +57,7 @@ function getRedisClient(): Redis | null {
         redisClient = null;
         if (process.env.NODE_ENV === "production" && !warnedMissingUpstash) {
             console.warn(
-                "[RateLimit] UPSTASH_REDIS_REST_URL/TOKEN is not configured. Public write requests will be blocked."
+                "[RateLimit] UPSTASH_REDIS_REST_URL/TOKEN is not configured. Falling back to in-memory rate limiting."
             );
             warnedMissingUpstash = true;
         }
@@ -108,14 +132,19 @@ async function applyRateLimit(
         return applyMemoryRateLimit(`${scope}:${clientKey}`, maxRequests, windowMs);
     }
 
-    const result = await limiter.limit(clientKey);
-    return {
-        success: result.success,
-        limit: result.limit,
-        remaining: result.remaining,
-        reset: result.reset,
-        mode: "upstash",
-    };
+    try {
+        const result = await limiter.limit(clientKey);
+        return {
+            success: result.success,
+            limit: result.limit,
+            remaining: result.remaining,
+            reset: result.reset,
+            mode: "upstash",
+        };
+    } catch (error) {
+        disableUpstashTemporarily(error);
+        return applyMemoryRateLimit(`${scope}:${clientKey}`, maxRequests, windowMs);
+    }
 }
 
 export async function limitContactRequests(clientKey: string): Promise<RateLimitResult> {
